@@ -36,6 +36,12 @@ class Policy:
     def __setitem__(self, state, action):
         self.policy[state] = action
 
+    def __len__(self):
+        return len(self.policy)
+
+    def __iter__(self):
+        return iter(self.policy)
+
 '''
 * action is a number from 0 to 8 specifying the action, as in the gym-sokoban repo
 * step(action) return:
@@ -48,7 +54,7 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 200        # Total episodes
+total_episodes = 5        # Total episodes
 learning_rate = 0.8           # Learning rate
 max_steps = 99                # Max steps per episode
 gamma = 0.95                  # Discounting rate
@@ -87,25 +93,24 @@ def evaluate_policy(policy):
     # compute the return
     G = 0
     sag_list = []
-    sar_list.reverse() # start loop in end
-    for s,a,r in sar_list:
+    for s,a,r in sar_list[::-1]: # start loop in end
         G = r + gamma*G
         sag_list.append((s,a,G))
 
     # return the computed list
-    sag_list.reverse()
-    return sag_list
+    return sag_list[::-1]
 
 '''
 attempt to find an optimal policy over a number of episodes
 '''
 def find_optimal_policy():
+    print("[!] Finding optimal policy")
     policy = Policy()
     qtable = Qtable()
     r = dict() # rewards for each tuple (state,action)->[list of rewards over many steps]
 
-    for _ in range(total_episodes):
-        print("Episode " + str(_))
+    for ep in range(total_episodes):
+        print("[+] Episode %d\r" % (ep+1), end="")
         sag_list = evaluate_policy(policy) # state, action, reward
         visited_states_actions = []
 
@@ -126,15 +131,20 @@ def find_optimal_policy():
         for s in policy:
             actions = qtable[s]
             policy[s] = actions.index(max(actions))
+    print('')
+    return policy
 
 def montecarlo():
+    print("[!] Starting Montecarlo")
     policy = find_optimal_policy()
     done = False
     state = env.reset()
-    while not done:
+    for i in range(1000):
         env.render()
         action = policy[str(state)]
         state, r, done, info = env.step(action)
 
 montecarlo()
 env.close()
+
+# TODO player is doing nothing for some reason
