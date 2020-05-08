@@ -3,7 +3,7 @@ import gym_sokoban
 import random
 import numpy as np
 
-env = gym.make('Sokoban-v0')
+env = gym.make('Boxoban-Train-v0')
 action_size = env.action_space.n
 
 '''
@@ -54,7 +54,7 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 5        # Total episodes
+total_episodes = 200       # Total episodes
 learning_rate = 0.8           # Learning rate
 max_steps = 99                # Max steps per episode
 gamma = 0.95                  # Discounting rate
