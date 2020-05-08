@@ -3,8 +3,7 @@ import gym_sokoban
 import random
 import numpy as np
 
-env = gym.make('Boxoban-Train-v0')
-#env = gym.make('Sokoban-small-v0')
+env = gym.make('Boxoban-Train-v1')
 action_size = env.action_space.n
 
 '''
