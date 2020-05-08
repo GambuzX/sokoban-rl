@@ -54,13 +54,13 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 50       # Total episodes
+total_episodes = 200       # Total episodes
 learning_rate = 0.8           # Learning rate
-max_steps = 99                # Max steps per episode
+max_steps = 200                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
-epsilon = 0.5                # Exploration rate
+epsilon = 0.5             # Exploration rate
 max_epsilon = 1.0             # Exploration probability at start
 min_epsilon = 0.01            # Minimum exploration probability 
 decay_rate = 0.001             # Exponential decay rate for exploration prob
