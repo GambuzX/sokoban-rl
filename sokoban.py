@@ -4,6 +4,7 @@ import random
 import numpy as np
 
 env = gym.make('Boxoban-Train-v0')
+#env = gym.make('Sokoban-small-v0')
 action_size = env.action_space.n
 
 '''
@@ -54,22 +55,33 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 200       # Total episodes
+total_episodes = 50       # Total episodes
 learning_rate = 0.8           # Learning rate
 max_steps = 99                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
-epsilon = 1.0                 # Exploration rate
+epsilon = 0.5                # Exploration rate
 max_epsilon = 1.0             # Exploration probability at start
 min_epsilon = 0.01            # Minimum exploration probability 
 decay_rate = 0.001             # Exponential decay rate for exploration prob
+
+
+def print_state(s):
+    for r in range(7):
+        for c in range(7):
+            print(s[r*16+8][c*16+8], end=" ")
+        print("\n")
+
+def state_hash(s):
+    return hash(s.tostring())
 
 '''
 returns random action epsilon times, and 'action' (1-epsilon) times
 '''
 def epsilon_random_action(action):
-    return action if random.uniform(0,1) > epsilon else env.action_space.sample()
+    choice = random.uniform(0,1)
+    return action if choice > epsilon else env.action_space.sample()
 
 '''
 play episode until the end, recording every state, action and reward
@@ -78,17 +90,18 @@ def evaluate_policy(policy):
     env.reset()
     sar_list = [] # state, action, reward
     done = False
-    next_action = env.action_space.sample()
-    
+    a = env.action_space.sample() # start with random action
+
     for _ in range(max_steps):
-        new_state, reward, done, info = env.step(next_action)
-        new_state = str(new_state)
+        new_state, reward, done, info = env.step(a)
+        s_hash = state_hash(new_state)
 
         if done:
-            sar_list.append((new_state, 0, reward))
+            sar_list.append((s_hash, 0, reward))
+            break
         else:
-            a = epsilon_random_action(policy[new_state])
-            sar_list.append((new_state, a, reward))
+            a = epsilon_random_action(policy[s_hash])
+            sar_list.append((s_hash, a, reward))
     
     # compute the return
     G = 0
@@ -139,12 +152,16 @@ def montecarlo():
     policy = find_optimal_policy()
     done = False
     state = env.reset()
+    s_hash = state_hash(state)
     for i in range(1000):
         env.render()
-        action = policy[str(state)]
+        action = policy[str(s_hash)]
         state, r, done, info = env.step(action)
+        s_hash = state_hash(state)
 
 montecarlo()
+
 env.close()
 
 # TODO player is doing nothing for some reason
+# think its because states are different every time
