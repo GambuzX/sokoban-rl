@@ -4,6 +4,37 @@ import random
 import numpy as np
 
 env = gym.make('Sokoban-v0')
+action_size = env.action_space.n
+
+'''
+maps state->action_list, where the list has the qvalue for each action
+'''
+class Qtable:
+    def __init__(self):
+        self.qtable = dict()
+
+    def __getitem__(self, state):
+        if state not in self.qtable:
+            self.qtable[state] = [0 for _ in range(action_size)] # TODO should this start at 0 ???
+        return self.qtable[state]
+
+    def __setitem__(self, key, value):
+        self.qtable[key] = value
+
+'''
+maps state->action
+'''
+class Policy:
+    def __init__(self):
+        self.policy = dict()
+    
+    def __getitem__(self, state):
+        if state not in self.policy:
+            self.policy[state] = env.action_space.sample()
+        return self.policy[state]
+
+    def __setitem__(self, state, action):
+        self.policy[state] = action
 
 '''
 * action is a number from 0 to 8 specifying the action, as in the gym-sokoban repo
@@ -43,49 +74,67 @@ def evaluate_policy(policy):
     done = False
     next_action = env.action_space.sample()
     
-    while not done:
+    for _ in range(max_steps):
         new_state, reward, done, info = env.step(next_action)
+        new_state = str(new_state)
 
         if done:
-            sar_list.append((new_state, None, reward))
+            sar_list.append((new_state, 0, reward))
         else:
             a = epsilon_random_action(policy[new_state])
             sar_list.append((new_state, a, reward))
+    
+    # compute the return
+    G = 0
+    sag_list = []
+    sar_list.reverse() # start loop in end
+    for s,a,r in sar_list:
+        G = r + gamma*G
+        sag_list.append((s,a,G))
 
-'''
-generate random policy for each state
-'''
-def random_policy():
-    return []
+    # return the computed list
+    sag_list.reverse()
+    return sag_list
 
 '''
 attempt to find an optimal policy over a number of episodes
 '''
 def find_optimal_policy():
-    policy = random_policy()
-    Q = [[]] # TODO use numpy arrays
-    r = [] # rewards for each tuple (state,action)
+    policy = Policy()
+    qtable = Qtable()
+    r = dict() # rewards for each tuple (state,action)->[list of rewards over many steps]
 
-    for _ in range(max_steps):
+    for _ in range(total_episodes):
+        print("Episode " + str(_))
         sag_list = evaluate_policy(policy) # state, action, reward
         visited_states_actions = []
 
-        for (s,a,G) in sag_list:
-            if (s,a,G) not in visited_states_actions:
+        for s,a,G in sag_list: # s = str(state)
+            if (s,a) not in visited_states_actions:
+                # update rewards for (s,a)
+                if (s,a) not in r:
+                    r[(s,a)] = []
                 r[(s,a)].append(G)
-                Q[s][a] = sum(r[(s,a)]) / len(r[(s,a)])
-                visited_states_actions.add(s,a)
+
+                # update qtable
+                qtable[s][a] = sum(r[(s,a)]) / len(r[(s,a)]) # avg
+
+                # mark visited
+                visited_states_actions.append((s,a))
         
+        # improve policy
         for s in policy:
-            policy[s] = []#action_with_max(Q[s])
+            actions = qtable[s]
+            policy[s] = actions.index(max(actions))
 
+def montecarlo():
+    policy = find_optimal_policy()
+    done = False
+    state = env.reset()
+    while not done:
+        env.render()
+        action = policy[str(state)]
+        state, r, done, info = env.step(action)
 
-#state = env.reset()
-#for _ in range(1000):
-#    env.render()
-#    action = env.action_space.sample()
-#    observation, reward, done, info = env.step(action)
-
+montecarlo()
 env.close()
-
-# TODO create wrapper around env.step to change returned state
