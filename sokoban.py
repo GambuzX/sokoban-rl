@@ -55,13 +55,13 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 200       # Total episodes
+total_episodes = 1000       # Total episodes
 learning_rate = 0.8           # Learning rate
-max_steps = 50                # Max steps per episode
+max_steps = 200                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
-epsilon = 0.3             # Exploration rate
+epsilon = 1            # Exploration rate
 max_epsilon = 1.0             # Exploration probability at start
 min_epsilon = 0.01            # Minimum exploration probability 
 decay_rate = 0.001             # Exponential decay rate for exploration prob
@@ -145,6 +145,10 @@ def find_optimal_policy():
         for s in policy:
             actions = qtable[s]
             policy[s] = actions.index(max(actions))
+
+        # update epsilon
+        epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay_rate * ep)
+
     print('')
     return policy
 
