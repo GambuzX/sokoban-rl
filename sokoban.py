@@ -2,6 +2,7 @@ import gym
 import gym_sokoban
 import random
 import numpy as np
+import time
 
 env = gym.make('Boxoban-Train-v1')
 action_size = env.action_space.n
@@ -56,11 +57,11 @@ class Policy:
 # @hyperparameters
 total_episodes = 200       # Total episodes
 learning_rate = 0.8           # Learning rate
-max_steps = 200                # Max steps per episode
+max_steps = 50                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
-epsilon = 0.5             # Exploration rate
+epsilon = 0.3             # Exploration rate
 max_epsilon = 1.0             # Exploration probability at start
 min_epsilon = 0.01            # Minimum exploration probability 
 decay_rate = 0.001             # Exponential decay rate for exploration prob
@@ -150,14 +151,22 @@ def find_optimal_policy():
 def montecarlo():
     print("[!] Starting Montecarlo")
     policy = find_optimal_policy()
+    print("[!] Found policy")
+    input("Press any key to continue...")
     done = False
     state = env.reset()
     s_hash = state_hash(state)
     for i in range(1000):
+        time.sleep(0.5)
         env.render()
-        action = policy[str(s_hash)]
+
+        action = policy[s_hash]
         state, r, done, info = env.step(action)
-        s_hash = state_hash(state)
+
+        new_s_hash = state_hash(state)
+        if new_s_hash == s_hash:
+            break
+        s_hash = new_s_hash
 
 montecarlo()
 
