@@ -92,6 +92,7 @@ def evaluate_policy(policy):
     a = env.action_space.sample() # start with random action
 
     for _ in range(max_steps):
+        env.render()
         new_state, reward, done, info = env.step(a)
         s_hash = state_hash(new_state)
 
@@ -164,3 +165,6 @@ env.close()
 
 # TODO player is doing nothing for some reason
 # think its because states are different every time
+
+# TODO analisar frequencia de estados
+# gerar mais tabuleiros a começar em sitios diferentes
