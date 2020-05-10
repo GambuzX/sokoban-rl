@@ -4,6 +4,14 @@ import random
 import numpy as np
 import time
 
+'''
+* action is a number from 0 to 8 specifying the action, as in the gym-sokoban repo
+* step(action) return:
+    - observation (state): board's pixels (width x height). each element represents the rgb color of the pixel in human mode
+    - reward: double value representing the reward, as explained in the gym-sokoban repo
+    - done: boolean, has episode terminated
+    - info: {'action.name': 'push down (example)', 'action.moved_player': BOOLEAN, 'action.moved_box': BOOLEAN}
+'''
 env = gym.make('Boxoban-Train-v1')
 action_size = env.action_space.n
 
@@ -19,13 +27,10 @@ class Qtable:
             self.qtable[state] = [0 for _ in range(action_size)] # TODO should this start at 0 ???
         return self.qtable[state]
 
-    def actions(self, state, done):
+    def get_action(self, state, action, done):
         if state not in self.qtable:
-            if done:
-                self.qtable[state] = [0 for _ in range(action_size)]
-            else:
-                self.qtable[state] = [env.action_space.sample() for _ in range(action_size)]
-        return self.qtable[state]
+            self.qtable[state] = [0 if done else 0 for _ in range(action_size)] # TODO random value if not done??
+        return self.qtable[state][action]
 
     def __setitem__(self, key, value):
         self.qtable[key] = value
@@ -51,21 +56,12 @@ class Policy:
     def __iter__(self):
         return iter(self.policy)
 
-'''
-* action is a number from 0 to 8 specifying the action, as in the gym-sokoban repo
-* step(action) return:
-    - observation (state): board's pixels (width x height). each element represents the rgb color of the pixel in human mode
-    - reward: double value representing the reward, as explained in the gym-sokoban repo
-    - done: boolean, has episode terminated
-    - info: {'action.name': 'push down (example)', 'action.moved_player': BOOLEAN, 'action.moved_box': BOOLEAN}
-'''
-
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 1000       # Total episodes
-learning_rate = 0.8           # Learning rate
-max_steps = 200                # Max steps per episode
+total_episodes = 50       # Total episodes
+alpha = 0.8           # Learning rate
+max_steps = 50                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
@@ -89,6 +85,25 @@ returns random action epsilon times, and 'action' (1-epsilon) times
 def epsilon_random_action(action):
     choice = random.uniform(0,1)
     return action if choice > epsilon else env.action_space.sample()
+
+'''
+runs the environment using given policy
+'''
+def run_policy(policy):
+    done = False
+    state = env.reset()
+    s_hash = state_hash(state)
+    for i in range(1000):
+        time.sleep(0.5)
+        env.render()
+
+        action = policy[s_hash]
+        state, r, done, info = env.step(action)
+
+        new_s_hash = state_hash(state)
+        if new_s_hash == s_hash: # did not change state
+            break
+        s_hash = new_s_hash
 
 '''
 play episode until the end, recording every state, action and reward
@@ -123,8 +138,8 @@ def evaluate_policy(policy):
 '''
 attempt to find an optimal policy over a number of episodes
 '''
-def find_optimal_policy():
-    print("[!] Finding optimal policy")
+def montecarlo():
+    print("[!] Starting Montecarlo")
     policy = Policy()
     qtable = Qtable()
     r = dict() # rewards for each tuple (state,action)->[list of rewards over many steps]
@@ -158,28 +173,53 @@ def find_optimal_policy():
     print('')
     return policy
 
-def montecarlo():
-    print("[!] Starting Montecarlo")
-    policy = find_optimal_policy()
-    print("[!] Found policy")
-    input("Press any key to continue...")
-    done = False
-    state = env.reset()
-    s_hash = state_hash(state)
-    for i in range(1000):
-        time.sleep(0.5)
-        env.render()
 
-        action = policy[s_hash]
-        state, r, done, info = env.step(action)
+def sarsa():
+    policy = Policy()
+    qtable = Qtable()
 
-        new_s_hash = state_hash(state)
-        if new_s_hash == s_hash:
-            break
-        s_hash = new_s_hash
+    for ep in range(total_episodes):
+        print("[+] Episode %d\r" % (ep+1), end="")
+        
+        s = env.reset() # start state
+        s_hash = state_hash(s)
+        done = False        
+        a = epsilon_random_action(policy[s_hash])
+        
+        while not done:
+            # step
+            env.render()
+            new_state, r, done, info = env.step(a)
+            new_s_hash = state_hash(new_state)            
+            
+            # choose next action
+            next_a = epsilon_random_action(policy[new_s_hash])     
+                        
+            # calculate new Q(s,a)
+            curr_q = qtable[s_hash][a]
+            next_q = qtable[new_s_hash][next_a]
+            qtable[s_hash][a] = curr_q + alpha * (r + gamma*next_q - curr_q)
 
-#montecarlo()
+            # improve policy
+            s_actions = qtable[s_hash]
+            policy[s_hash] = s_actions.index(max(s_actions))
+            
+            # Next iteration values
+            s_hash = new_s_hash
+            a = next_a # use same action in next step as determined above
 
+            # update epsilon
+            epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay_rate * ep)
+            
+    print('')
+    return policy
+        
+
+#policy = montecarlo()
+policy = sarsa()
+
+input("Press any key to continue...")
+run_policy(policy)
 env.close()
 
 # TODO player is doing nothing for some reason
@@ -187,71 +227,3 @@ env.close()
 
 # TODO analisar frequencia de estados
 # gerar mais tabuleiros a começar em sitios diferentes
-
-def sarsa():
-    policy = Policy()
-    qtable = Qtable()
-    r = dict() # rewards for each tuple (state,action)->[list of rewards over many steps]
-
-    epsilon = 0.1 # random action 10% of the time
-    alpha = 0.1
-
-    for ep in range(total_episodes):
-        print("[+] Episode %d\r" % (ep+1), end="")
-        
-        s = env.reset() # start state
-        done = False
-        
-        s_hash = state_hash(s)
-        
-        actions = qtable.actions(s_hash, done)
-        
-        a = epsilon_random_action(policy[s_hash])
-        
-        for _ in range(max_steps):
-            env.render()
-            new_state, reward, new_done, info = env.step(a)
-            
-            new_s_hash = state_hash(new_state)
-            
-            new_a = epsilon_random_action(policy[new_s_hash])
-            new_actions = qtable.actions(new_s_hash, new_done)
-            
-                        
-            for index in range(len(actions)):
-                actions[index] = actions[index] + alpha*(reward+gamma*new_actions[index]-actions[index])
-            
-            qtable[s_hash] = actions
-            
-            # Next iteration values
-            done = new_done
-            a = new_a
-            s = new_state
-            actions = new_actions
-            s_hash = new_s_hash
-            
-            if done:
-                break
-            
-    
-    done = False
-    state = env.reset()
-    s_hash = state_hash(state)
-    for i in range(1000):
-        time.sleep(0.5)
-        env.render()
-
-        action = qtable[s_hash]
-        state, r, done, info = env.step(action.index(max(action)))
-
-        if done:
-            print("Finish")
-            break
-
-        new_s_hash = state_hash(state)
-        if new_s_hash == s_hash:
-            break
-        s_hash = new_s_hash
-        
-
-sarsa()
