@@ -3,6 +3,7 @@ import gym_sokoban
 import random
 import numpy as np
 import time
+import math
 
 env = gym.make('Boxoban-Train-v1')
 action_size = env.action_space.n
@@ -23,7 +24,9 @@ class Qtable:
         self.qtable[key] = value
 
     def get_greedy(self, key):
-        max_value = np.max(qtable[key])
+        if not key in self.qtable:
+            return -1
+        max_value = np.max(self.qtable[key])
         action_index = self.qtable[key].index(max_value)
         return action_index
 
@@ -60,7 +63,7 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 1000       # Total episodes
+total_episodes = 50       # Total episodes
 learning_rate = 0.8           # Learning rate
 max_steps = 200                # Max steps per episode
 gamma = 0.95                  # Discounting rate
@@ -154,33 +157,38 @@ def montecarlo():
 '''
 def q_learning_training():
     qtable = Qtable()
+    epsilon = max_epsilon
 
     for ep in range(total_episodes):
+        print("[+] Episode %d\r" % (ep+1), end="")
         env.reset()
         done = False
         a = env.action_space.sample() # start with random action
         prev_hash = None
-        epsilon = max_epsilon
 
         for _ in range(max_steps):
             env.render()
             new_state, reward, done, info = env.step(a)
             s_hash = state_hash(new_state)
 
-            if not s_hash in qtable:
-                qtable[s_hash][a] = reward
-
-            if not prev_hash is None:
-                qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * np.max(qtable[s_hash]) — qtable[prev_hash][a])
-
-            if done:
-                sar_list.append((s_hash, 0, reward))
-                break
+            if prev_hash is None or qtable[s_hash] is None:
+                qtable[prev_hash][a] = reward
             else:
-                a = epsilon_random_action(qtable.get_greedy(s_hash))
+                if not qtable[s_hash] is None:
+                    qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * np.max(qtable[s_hash]) - qtable[prev_hash][a])
+                else:
+                    qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * reward - qtable[prev_hash][a])
+            if done:
+                break
 
-            epsilon = epsilon * exp(decay_rate)
-            if epsilon < min_epsilon
+            greedy_action = qtable.get_greedy(s_hash)
+            if greedy_action is -1:
+                a = epsilon_random_action(env.action_space.sample())
+            else:
+                a = epsilon_random_action(greedy_action)
+
+            epsilon = epsilon * math.exp(-decay_rate)
+            if epsilon < min_epsilon:
                 epsilon = min_epsilon
         
     return qtable
@@ -201,7 +209,7 @@ def q_learning():
         state, r, done, info = env.step(action)
 
         new_s_hash = state_hash(state)
-        if new_s_hash == s_hash:
+        if new_s_hash == s_hash or done:
             break
         s_hash = new_s_hash
 
