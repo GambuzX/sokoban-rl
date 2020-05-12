@@ -161,23 +161,21 @@ def q_learning_training():
 
     for ep in range(total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
-        env.reset()
+        initial_state = env.reset()
         done = False
         a = env.action_space.sample() # start with random action
-        prev_hash = None
+        prev_hash = state_hash(initial_state)
 
         for _ in range(max_steps):
             env.render()
             new_state, reward, done, info = env.step(a)
             s_hash = state_hash(new_state)
 
-            if prev_hash is None or qtable[s_hash] is None:
-                qtable[prev_hash][a] = reward
+            if not qtable[s_hash] is None:
+                qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * np.max(qtable[s_hash]) - qtable[prev_hash][a])
             else:
-                if not qtable[s_hash] is None:
-                    qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * np.max(qtable[s_hash]) - qtable[prev_hash][a])
-                else:
-                    qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * reward - qtable[prev_hash][a])
+                qtable[prev_hash][a] = qtable[prev_hash][a] + learning_rate * (reward + gamma * reward - qtable[prev_hash][a])
+                
             if done:
                 break
 
