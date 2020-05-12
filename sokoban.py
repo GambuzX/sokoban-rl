@@ -59,14 +59,14 @@ class Policy:
 # Set hyperparameters
 
 # @hyperparameters
-total_episodes = 50       # Total episodes
+total_episodes = 200       # Total episodes
 alpha = 0.8           # Learning rate
-max_steps = 50                # Max steps per episode
+max_steps = 100                # Max steps per episode
 gamma = 0.95                  # Discounting rate
 
 # Exploration parameters
-epsilon = 1            # Exploration rate
-max_epsilon = 1.0             # Exploration probability at start
+epsilon = 0.2            # Exploration rate
+max_epsilon = 0.2             # Exploration probability at start
 min_epsilon = 0.01            # Minimum exploration probability 
 decay_rate = 0.001             # Exponential decay rate for exploration prob
 
@@ -91,16 +91,15 @@ runs the environment using given policy
 '''
 def run_policy(policy):
     done = False
-    state = env.reset()
-    s_hash = state_hash(state)
+    s_hash = state_hash(env.reset()) # reset state
     for i in range(1000):
         time.sleep(0.5)
         env.render()
 
         action = policy[s_hash]
-        state, r, done, info = env.step(action)
+        s, r, done, info = env.step(action)
 
-        new_s_hash = state_hash(state)
+        new_s_hash = state_hash(s)
         if new_s_hash == s_hash: # did not change state
             break
         s_hash = new_s_hash
@@ -175,21 +174,25 @@ def montecarlo():
 
 
 def sarsa():
+    # set exploration parameters
+    epsilon = 0.2
+    max_epsilon = 0.2
+    min_epsilon = 0.01
+
     policy = Policy()
     qtable = Qtable()
 
     for ep in range(total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
         
-        s = env.reset() # start state
-        s_hash = state_hash(s)
-        done = False        
-        a = epsilon_random_action(policy[s_hash])
+        s_hash = state_hash(env.reset()) # reset state
+        a = epsilon_random_action(policy[s_hash]) # choose epsilon greedy action
         
+        done = False        
         while not done:
             # step
             env.render()
-            new_state, r, done, info = env.step(a)
+            new_state, r, done, info = env.step(a) # handle done differently?
             new_s_hash = state_hash(new_state)            
             
             # choose next action
@@ -198,7 +201,7 @@ def sarsa():
             # calculate new Q(s,a)
             curr_q = qtable[s_hash][a]
             next_q = qtable[new_s_hash][next_a]
-            qtable[s_hash][a] = curr_q + alpha * (r + gamma*next_q - curr_q)
+            qtable[s_hash][a] = curr_q + alpha*(r + gamma*next_q - curr_q)
 
             # improve policy
             s_actions = qtable[s_hash]
@@ -221,9 +224,3 @@ policy = sarsa()
 input("Press any key to continue...")
 run_policy(policy)
 env.close()
-
-# TODO player is doing nothing for some reason
-# think its because states are different every time
-
-# TODO analisar frequencia de estados
-# gerar mais tabuleiros a começar em sitios diferentes
