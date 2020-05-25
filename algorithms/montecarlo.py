@@ -1,8 +1,8 @@
 import numpy as np
 import random
-from global_configs import GlobalConfigs
-from policy import Policy
-from utils import *
+from sokoban_utils.global_configs import GlobalConfigs
+from sokoban_utils.policy import Policy
+from sokoban_utils.utils import *
 
 # @hyperparameters
 total_episodes = 200       # Total episodes

@@ -1,5 +1,5 @@
 import time
-from utils import state_hash
+from sokoban_utils.utils import state_hash
 
 '''
 maps state->action

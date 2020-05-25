@@ -1,8 +1,8 @@
 import gym
 import gym_sokoban
-from sarsa import run_sarsa
-from montecarlo import run_montecarlo
-from policy import run_policy
+from algorithms.sarsa import run_sarsa
+from algorithms.montecarlo import run_montecarlo
+from sokoban_utils.policy import run_policy
 
 '''
 * action is a number from 0 to 8 specifying the action, as in the gym-sokoban repo
@@ -15,8 +15,8 @@ from policy import run_policy
 
 env = gym.make('Boxoban-Train-v1')
  
-policy = run_montecarlo(env, log=False, config=dict())
-#policy = run_sarsa(env, log=False, config=dict())
+#policy = run_montecarlo(env, log=False, config=dict())
+policy = run_sarsa(env, log=False, config=dict())
 
 input("Press any key to continue...")
 run_policy(env, policy)

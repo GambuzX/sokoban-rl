@@ -1,8 +1,8 @@
 import random
 import numpy as np
-from global_configs import GlobalConfigs
-from policy import *
-from utils import *
+from sokoban_utils.global_configs import GlobalConfigs
+from sokoban_utils.policy import Policy
+from sokoban_utils.utils import *
 
 # Set hyperparameters
 
