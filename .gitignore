@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 python3.6_env/
+trained_models/
