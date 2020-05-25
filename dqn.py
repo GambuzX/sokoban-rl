@@ -15,8 +15,8 @@ exploration_initial_eps=1.0 #initial value of random action probability
 train_freq=1 #update the model every train_freq steps. set to None to disable printing
 batch_size=32 #size of a batched sampled from replay buffer for training
 double_q=True #whether to enable Double-Q learning or not.
-learning_starts=1000 #how many steps of the model to collect transitions for before learning starts
-timesteps = 10#2000
+learning_starts=100 #how many steps of the model to collect transitions for before learning starts
+timesteps = 1000#2000
 verbose = 1
 
 env = gym.make('Boxoban-Train-v1')
@@ -41,5 +41,5 @@ obs = env.reset()
 print(model.action_probability(obs))
 while True:
     action, _states = model.predict(obs)
-    obs, rewards, dones, info = env.step(action)
+    obs, rewards, done, info = env.step(action)
     env.render()

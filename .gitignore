@@ -130,3 +130,4 @@ dmypy.json
 
 python3.6_env/
 trained_models/
+logs
