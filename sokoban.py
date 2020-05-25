@@ -1,5 +1,3 @@
-import gym
-import gym_sokoban
 import random
 import numpy as np
 import time
@@ -12,24 +10,27 @@ import time
     - done: boolean, has episode terminated
     - info: {'action.name': 'push down (example)', 'action.moved_player': BOOLEAN, 'action.moved_box': BOOLEAN}
 '''
-env = gym.make('Boxoban-Train-v1')
-action_size = env.action_space.n
+
+#env = gym.make('Boxoban-Train-v1')
+#action_size = 0
+
 
 '''
 maps state->action_list, where the list has the qvalue for each action
 '''
 class Qtable:
-    def __init__(self):
+    def __init__(self, action_size):
         self.qtable = dict()
+        self.action_size = action_size
 
     def __getitem__(self, state):
         if state not in self.qtable:
-            self.qtable[state] = [0 for _ in range(action_size)] # TODO should this start at 0 ???
+            self.qtable[state] = [0 for _ in range(self.action_size)] # TODO should this start at 0 ???
         return self.qtable[state]
 
     def get_action(self, state, action, done):
         if state not in self.qtable:
-            self.qtable[state] = [0 if done else 0 for _ in range(action_size)] # TODO random value if not done??
+            self.qtable[state] = [0 if done else 0 for _ in range(self.action_size)] # TODO random value if not done??
         return self.qtable[state][action]
 
     def __setitem__(self, key, value):
@@ -39,12 +40,13 @@ class Qtable:
 maps state->action
 '''
 class Policy:
-    def __init__(self):
+    def __init__(self, env):
         self.policy = dict()
+        self.env = env
     
     def __getitem__(self, state):
         if state not in self.policy:
-            self.policy[state] = env.action_space.sample()
+            self.policy[state] = self.env.action_space.sample()
         return self.policy[state]
 
     def __setitem__(self, state, action):
@@ -82,14 +84,14 @@ def state_hash(s):
 '''
 returns random action epsilon times, and 'action' (1-epsilon) times
 '''
-def epsilon_random_action(action):
+def epsilon_random_action(env, action):
     choice = random.uniform(0,1)
     return action if choice > epsilon else env.action_space.sample()
 
 '''
 runs the environment using given policy
 '''
-def run_policy(policy):
+def run_policy(env, policy):
     done = False
     s_hash = state_hash(env.reset()) # reset state
     for i in range(1000):
@@ -107,7 +109,7 @@ def run_policy(policy):
 '''
 play episode until the end, recording every state, action and reward
 '''
-def evaluate_policy(policy):
+def evaluate_policy(env, policy):
     env.reset()
     sar_list = [] # state, action, reward
     done = False
@@ -121,7 +123,7 @@ def evaluate_policy(policy):
             sar_list.append((s_hash, 0, reward))
             break
         else:
-            a = epsilon_random_action(policy[s_hash])
+            a = epsilon_random_action(env, policy[s_hash])
             sar_list.append((s_hash, a, reward))
     
     # compute the return
@@ -134,18 +136,32 @@ def evaluate_policy(policy):
     # return the computed list
     return sag_list[::-1]
 
+def run_montecarlo(env, dic):
+    total_episodes = 200 if not 'total_episodes' in dic else dic['total_episodes']  
+    alpha = 0.8 if not 'alpha' in dic else dic['alpha']
+    max_steps = 100 if not 'max_steps' in dic else dic['max_steps']               
+    gamma = 0.95 if not 'gamma' in dic else dic['gamma']                  
+    epsilon = 0.2 if not 'epsilon' in dic else dic['epsilon']
+    max_epsilon = 0.2 if not 'max_epsilon' in dic else dic['max_epsilon']
+    min_epsilon = 0.01 if not 'min_epsilon' in dic else dic['min_epsilon']
+    decay_rate = 0.001 if not 'decay_rate' in dic else dic['decay_rate']
+    
+    policy = montecarlo(env)
+    
+    return policy
+
 '''
 attempt to find an optimal policy over a number of episodes
 '''
-def montecarlo():
+def montecarlo(env):
     print("[!] Starting Montecarlo")
-    policy = Policy()
-    qtable = Qtable()
+    policy = Policy(env)
+    qtable = Qtable(env.action_space.n)
     r = dict() # rewards for each tuple (state,action)->[list of rewards over many steps]
 
     for ep in range(total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
-        sag_list = evaluate_policy(policy) # state, action, reward
+        sag_list = evaluate_policy(env, policy) # state, action, reward
         visited_states_actions = []
 
         for s,a,G in sag_list: # s = str(state)
@@ -172,21 +188,37 @@ def montecarlo():
     print('')
     return policy
 
+def run_sarsa(env, dic):
+    total_episodes = 200 if not 'total_episodes' in dic else dic['total_episodes']  
+    alpha = 0.8 if not 'alpha' in dic else dic['alpha']
+    max_steps = 100 if not 'max_steps' in dic else dic['max_steps']               
+    gamma = 0.95 if not 'gamma' in dic else dic['gamma']                  
+    epsilon = 0.2 if not 'epsilon' in dic else dic['epsilon']
+    max_epsilon = 0.2 if not 'max_epsilon' in dic else dic['max_epsilon']
+    min_epsilon = 0.01 if not 'min_epsilon' in dic else dic['min_epsilon']
+    decay_rate = 0.001 if not 'decay_rate' in dic else dic['decay_rate']
+    
+    action_size = env.action_space.n
+    
+    policy = montecarlo(env)
+    
+    return policy
 
-def sarsa():
+
+def sarsa(env):
     # set exploration parameters
     epsilon = 0.2
     max_epsilon = 0.2
     min_epsilon = 0.01
 
-    policy = Policy()
-    qtable = Qtable()
+    policy = Policy(env)
+    qtable = Qtable(env.action_space.n)
 
     for ep in range(total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
         
         s_hash = state_hash(env.reset()) # reset state
-        a = epsilon_random_action(policy[s_hash]) # choose epsilon greedy action
+        a = epsilon_random_action(env, policy[s_hash]) # choose epsilon greedy action
         
         done = False        
         while not done:
@@ -196,7 +228,7 @@ def sarsa():
             new_s_hash = state_hash(new_state)            
             
             # choose next action
-            next_a = epsilon_random_action(policy[new_s_hash])     
+            next_a = epsilon_random_action(env, policy[new_s_hash])     
                         
             # calculate new Q(s,a)
             curr_q = qtable[s_hash][a]
@@ -216,11 +248,11 @@ def sarsa():
             
     print('')
     return policy
-        
-
+       
+ 
 #policy = montecarlo()
-policy = sarsa()
+#policy = sarsa()
 
-input("Press any key to continue...")
-run_policy(policy)
-env.close()
+#input("Press any key to continue...")
+#run_policy(env, policy)
+#env.close()
