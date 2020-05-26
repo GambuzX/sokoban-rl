@@ -3,6 +3,7 @@ import random
 import numpy as np
 import time
 import random
+from datetime import datetime
 
 '''
 maps state->action_list, where the list has the qvalue for each action
@@ -79,5 +80,14 @@ def epsilon_random_action(env, action, epsilon):
 
 def write_config_to_file(config, filename):
     with open(filename, 'w') as handle:
+        handle.write(str(len(config.keys())) + "\n")
         for key in config:
             handle.write(str(key) + ": " + str(config[key]) + "\n")
+
+def write_csv_results(config, episode, reward, elapsed):
+    with open(config.logfile, "a+") as handle:
+        handle.write(str(episode) + "," + str(reward) + "," + str(elapsed) + "\n")
+
+def current_time():
+    now = datetime.now()
+    return now.strftime("%H:%M:%S")

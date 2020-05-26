@@ -1,5 +1,4 @@
 import numpy as np
-import random
 from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
@@ -19,8 +18,9 @@ def run_montecarlo(env, config, log=False):
 
     if log:
         create_dir(GlobalConfigs.logs_dir)
-        logfile = GlobalConfigs.logs_dir + "montecarlo_" + str(random.randint(1, 9999999)) + ".txt"
+        logfile = GlobalConfigs.logs_dir + "montecarlo_" + current_time() + ".txt"
         write_config_to_file(config, logfile)
+        config.logfile = logfile
     
     return montecarlo(env, config, log)
 
@@ -36,7 +36,9 @@ def montecarlo(env, c, log=False):
 
     for ep in range(c.total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
-        sag_list = evaluate_policy(env, c, policy) # state, action, reward
+        ep_start_t = time.time()
+
+        sag_list, total_reward = evaluate_policy(env, c, policy) # state, action, reward
         visited_states_actions = []
 
         for s,a,G in sag_list: # s = str(state)
@@ -59,6 +61,11 @@ def montecarlo(env, c, log=False):
 
         # update epsilon
         c.epsilon = c.min_epsilon + (c.max_epsilon - c.min_epsilon) * np.exp(-c.decay_rate * ep)
+        
+        if log:
+            ep_end_t = time.time()
+            elapsed = ep_end_t - ep_start_t # time in seconds
+            write_csv_results(c, ep+1, total_reward, elapsed)
 
     print('')
     return policy
@@ -71,10 +78,12 @@ def evaluate_policy(env, c, policy):
     sar_list = [] # state, action, reward
     done = False
     a = env.action_space.sample() # start with random action
+    total_reward = 0
     for _ in range(c.max_steps):
         env.render()
         new_state, reward, done, info = env.step(a)
         s_hash = state_hash(new_state)
+        total_reward += reward
 
         if done:
             sar_list.append((s_hash, 0, reward))
@@ -91,4 +100,4 @@ def evaluate_policy(env, c, policy):
         sag_list.append((s,a,G))
 
     # return the computed list
-    return sag_list[::-1]
+    return (sag_list[::-1], total_reward)

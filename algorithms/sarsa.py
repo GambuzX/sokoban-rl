@@ -1,5 +1,5 @@
-import random
 import numpy as np
+import time
 from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
@@ -20,8 +20,9 @@ def run_sarsa(env, config, log=False):
 
     if log:
         create_dir(GlobalConfigs.logs_dir)
-        logfile = GlobalConfigs.logs_dir + "sarsa_" + str(random.randint(1, 9999999)) + ".txt"
+        logfile = GlobalConfigs.logs_dir + "sarsa_" + current_time() + ".txt"
         write_config_to_file(config, logfile)
+        config.logfile = logfile
 
     return sarsa(env, config, log)  
 
@@ -33,16 +34,19 @@ def sarsa(env, c, log=False):
 
     for ep in range(c.total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
+        ep_start_t = time.time()
         
         s_hash = state_hash(env.reset()) # reset state
         a = epsilon_random_action(env, policy[s_hash], c.epsilon) # choose epsilon greedy action
         
+        total_reward = 0
         done = False        
         while not done:
             # step
             env.render()
-            new_state, r, done, info = env.step(a) # handle done differently?
-            new_s_hash = state_hash(new_state)            
+            new_state, r, done, info = env.step(a)
+            new_s_hash = state_hash(new_state)
+            total_reward += r        
             
             # choose next action
             next_a = epsilon_random_action(env, policy[new_s_hash], c.epsilon)     
@@ -62,6 +66,11 @@ def sarsa(env, c, log=False):
 
             # update epsilon
             c.epsilon = c.min_epsilon + (c.max_epsilon - c.min_epsilon) * np.exp(-c.decay_rate * ep)
+        
+        if log: 
+            ep_end_t = time.time()
+            elapsed = ep_end_t - ep_start_t # time in seconds
+            write_csv_results(c, ep+1, total_reward, elapsed)
             
     print('')
     return policy

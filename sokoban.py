@@ -17,9 +17,9 @@ from sokoban_utils.utils import Config
 env = gym.make('Boxoban-Train-v1')
  
 config = Config()
-config.total_episodes = 5
+config.total_episodes = 200
 
-policy = run_montecarlo(env, log=False, config=config)
+policy = run_montecarlo(env, log=True, config=config)
 policy = run_sarsa(env, log=True, config=config)
 
 input("Press any key to continue...")
