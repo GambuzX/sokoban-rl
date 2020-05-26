@@ -4,9 +4,8 @@ from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
-def run_sarsa(env, config, log=False):
-    if not config:
-        config = Config()
+def run_sarsa(env, initial_config, log=False):
+    config = copy_config(initial_config)
 
     # default paramaters values
     if 'total_episodes' not in config: config.total_episodes = 200 # Total episodes
