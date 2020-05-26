@@ -18,11 +18,10 @@ from sokoban_utils.utils import Config
 env = gym.make('Boxoban-Train-v1')
  
 config = Config()
-config.total_episodes = 200
-'''
+config.total_episodes = 20
+
 policy = run_montecarlo(env, log=True, config=config)
 policy = run_sarsa(env, log=True, config=config)
-'''
 policy = run_qlearning(env, config, True);
 
 input("Press any key to continue...")

@@ -21,14 +21,6 @@ class Qtable:
     def __setitem__(self, key, value):
         self.qtable[key] = value
 
-    def get_greedy(self, key):
-        if key in self.qtable:
-            max_value = np.max(self.qtable[key])
-            action_index = self.qtable[key].index(max_value)
-            return action_index
-        else:
-            return -1
-
 def print_state(s):
     for r in range(7):
         for c in range(7):

@@ -34,37 +34,31 @@ def q_learning(env, config, log):
         print("[+] Episode %d\r" % (ep+1), end="")
         initial_state = env.reset()
         done = False
-        a = env.action_space.sample() # start with random action
         prev_hash = state_hash(initial_state)
 
-        greedy_start = qtable.get_greedy(prev_hash)
-        if greedy_start is -1:
-            policy[prev_hash] = a
-        else:
-            policy[prev_hash] = greedy_start
-
         for _ in range(config.max_steps):
+            # choose next action
+            a = epsilon_random_action(env, policy[prev_hash], config.epsilon) 
+
             env.render()
             new_state, reward, done, info = env.step(a)
 
             s_hash = state_hash(new_state)
 
-            if not qtable[s_hash] is None:
-                qtable[prev_hash][a] = qtable[prev_hash][a] + config.alpha * (reward + config.gamma * np.max(qtable[s_hash]) - qtable[prev_hash][a])
-            else:
-                qtable[prev_hash][a] = qtable[prev_hash][a] + config.alpha * (reward + config.gamma * reward - qtable[prev_hash][a])
+            q_max = np.max(qtable[s_hash])
+
+            prev_q = qtable[prev_hash][a]
+            qtable[prev_hash][a] = prev_q + config.alpha * (reward + config.gamma * q_max - prev_q)
                 
             if done:
                 break
 
-            greedy_action = qtable.get_greedy(s_hash)
-            policy[s_hash] = greedy_action
-            if greedy_action is -1:
-                a = epsilon_random_action(env, env.action_space.sample(), config.epsilon)
-            else:
-                a = epsilon_random_action(env, greedy_action, config.epsilon)
-
             # update epsilon
             config.epsilon = config.min_epsilon + (config.max_epsilon - config.min_epsilon) * np.exp(-config.decay_rate * ep)
+            prev_hash = s_hash
+
+            # improve policy
+            s_actions = qtable[prev_hash]
+            policy[prev_hash] = s_actions.index(max(s_actions))
         
     return policy

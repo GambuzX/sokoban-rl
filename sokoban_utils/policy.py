@@ -34,6 +34,7 @@ def run_policy(env, policy):
         env.render()
 
         action = policy[s_hash]
+        print("Action %d\n" % action, end="")
         s, r, done, info = env.step(action)
 
         new_s_hash = state_hash(s)
