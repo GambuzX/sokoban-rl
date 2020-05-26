@@ -29,12 +29,14 @@ runs the environment using given policy
 def run_policy(env, policy):
     done = False
     s_hash = state_hash(env.reset()) # reset state
-    for i in range(1000):
-        time.sleep(0.5)
+    for i in range(1000):        
         env.render()
+        time.sleep(0.5)
+
+        if done:
+            break
 
         action = policy[s_hash]
-        print("Action %d\n" % action, end="")
         s, r, done, info = env.step(action)
 
         new_s_hash = state_hash(s)
