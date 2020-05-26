@@ -23,7 +23,7 @@ def run_sarsa(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    return sarsa(env, config, log)  
+    return sarsa(env, config, log), logfile  
 
 
 def sarsa(env, c, log=False):

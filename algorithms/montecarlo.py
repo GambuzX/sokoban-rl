@@ -21,7 +21,7 @@ def run_montecarlo(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
     
-    return montecarlo(env, config, log)
+    return montecarlo(env, config, log), logfile
 
 '''
 attempt to find an optimal policy over a number of episodes
