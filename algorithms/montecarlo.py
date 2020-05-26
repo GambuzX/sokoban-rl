@@ -3,9 +3,8 @@ from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
-def run_montecarlo(env, config, log=False):
-    if not config:
-        config = Config()
+def run_montecarlo(env, initial_config, log=False):
+    config = copy_config(initial_config)
 
     # default paramaters values
     if 'total_episodes' not in config: config.total_episodes = 200 # Total episodes
@@ -18,11 +17,11 @@ def run_montecarlo(env, config, log=False):
 
     if log:
         create_dir(GlobalConfigs.logs_dir)
-        logfile = GlobalConfigs.logs_dir + "montecarlo_" + current_time() + ".txt"
+        logfile = GlobalConfigs.logs_dir + "montecarlo_" + current_time() + ".txt"          
         write_config_to_file(config, logfile)
         config.logfile = logfile
     
-    return montecarlo(env, config, log)
+    return montecarlo(env, config, log), logfile
 
 '''
 attempt to find an optimal policy over a number of episodes

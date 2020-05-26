@@ -69,7 +69,6 @@ class Config(dict):
     def __delitem__(self, key):
         super(Config, self).__delitem__(key)
         del self.__dict__[key]
-
 '''
 returns random action epsilon times, and 'action' (1-epsilon) times
 '''
@@ -91,3 +90,14 @@ def write_csv_results(config, episode, reward, elapsed):
 def current_time():
     now = datetime.now()
     return now.strftime("%H:%M:%S")
+
+def copy_config(config):
+    if not config:
+        return Config()
+    
+    new_config = Config()
+    
+    for key in config:
+        new_config[key] = config[key]
+            
+    return new_config

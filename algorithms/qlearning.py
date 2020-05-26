@@ -24,7 +24,7 @@ def run_qlearning(env, config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    return q_learning(env, config, log)  
+    return q_learning(env, config, log),logfile  
 
 def q_learning(env, config, log):
     policy = Policy(env)
