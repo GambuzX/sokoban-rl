@@ -72,6 +72,7 @@ max_epsilon_config = copy_config(config)
 max_epsilon_list = np.arange(0.1, 1.0, 0.1).tolist()
 
 for max_epsilon in max_epsilon_list:
+    max_epsilon_config.epsilon = max_epsilon
     max_epsilon_config.max_epsilon = max_epsilon
     _, logfile = run_sarsa(env, log=True, initial_config=max_epsilon_config)
     sarsa_max_epsilon.write(logfile + "\n")

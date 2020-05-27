@@ -5,10 +5,7 @@ from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
 def run_qlearning(env, initial_config, log=False):
-    if not initial_config:
-        config = Config()
-    else:
-        config = initial_config
+    config = copy_config(initial_config)
 
     # default paramaters values
     if 'total_episodes' not in config: config.total_episodes = 200 # Total episodes
@@ -26,7 +23,8 @@ def run_qlearning(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    return q_learning(env, config, log),logfile  
+    policy = q_learning(env, config, log)
+    return (policy, logfile) if log else policy
 
 def q_learning(env, config, log):
     policy = Policy(env)
@@ -34,33 +32,34 @@ def q_learning(env, config, log):
 
     for ep in range(config.total_episodes):
         print("[+] Episode %d\r" % (ep+1), end="")
-        initial_state = env.reset()
+        ep_start_t = time.time()
+
+        s_hash = state_hash(env.reset()) # reset state
+
+        total_reward = 0
         done = False
-        prev_hash = state_hash(initial_state)
-
-        for _ in range(config.max_steps):
+        while not done:
             # choose next action
-            a = epsilon_random_action(env, policy[prev_hash], config.epsilon) 
+            a = epsilon_random_action(env, policy[s_hash], config.epsilon) 
 
+            # step
             env.render()
             new_state, reward, done, info = env.step(a)
+            new_s_hash = state_hash(new_state)
+            total_reward += reward
 
-            s_hash = state_hash(new_state)
-
-            q_max = np.max(qtable[s_hash])
-
-            prev_q = qtable[prev_hash][a]
-            qtable[prev_hash][a] = prev_q + config.alpha * (reward + config.gamma * q_max - prev_q)
-                
-            if done:
-                break
-
-            # update epsilon
-            config.epsilon = config.min_epsilon + (config.max_epsilon - config.min_epsilon) * np.exp(-config.decay_rate * ep)
-            prev_hash = s_hash
+            # update qtable
+            prev_q = qtable[s_hash][a]
+            q_max = np.max(qtable[new_s_hash])
+            qtable[s_hash][a] = prev_q + config.alpha * (reward + config.gamma * q_max - prev_q)
 
             # improve policy
-            s_actions = qtable[prev_hash]
-            policy[prev_hash] = s_actions.index(max(s_actions))
-        
+            s_actions = qtable[s_hash]
+            policy[s_hash] = s_actions.index(max(s_actions))
+
+            # update variables
+            s_hash = new_s_hash
+            config.epsilon = config.min_epsilon + (config.max_epsilon - config.min_epsilon) * np.exp(-config.decay_rate * ep)
+    
+    print('')
     return policy

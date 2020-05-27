@@ -20,8 +20,9 @@ def run_montecarlo(env, initial_config, log=False):
         logfile = GlobalConfigs.logs_dir + "montecarlo_" + current_time() + ".txt"          
         write_config_to_file(config, logfile)
         config.logfile = logfile
-    
-    return montecarlo(env, config, log), logfile
+
+    policy = montecarlo(env, config, log)
+    return (policy, logfile) if log else policy
 
 '''
 attempt to find an optimal policy over a number of episodes

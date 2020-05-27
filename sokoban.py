@@ -20,9 +20,9 @@ env = gym.make('Boxoban-Train-v1')
 config = Config()
 config.total_episodes = 20
 
-policy,graph = run_montecarlo(env, log=True, initial_config=config)
-policy,graph = run_sarsa(env, log=True, initial_config=config)
-policy,graph = run_qlearning(env, log=True, initial_config=config)
+policy,_ = run_montecarlo(env, log=True, initial_config=config)
+policy,_ = run_sarsa(env, log=True, initial_config=config)
+policy,_ = run_qlearning(env, log=True, initial_config=config)
 
 input("Press any key to continue...")
 run_policy(env, policy)
