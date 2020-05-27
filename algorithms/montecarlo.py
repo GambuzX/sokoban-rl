@@ -3,7 +3,7 @@ from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
-def run_montecarlo(env, initial_config, log=False):
+def run_montecarlo(env, initial_config, log=False, render=False):
     config = copy_config(initial_config)
 
     # default paramaters values
@@ -21,13 +21,13 @@ def run_montecarlo(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    policy = montecarlo(env, config, log)
+    policy = montecarlo(env, config, log, render)
     return (policy, logfile) if log else policy
 
 '''
 attempt to find an optimal policy over a number of episodes
 '''
-def montecarlo(env, c, log=False):
+def montecarlo(env, c, log=False, render=False):
 
     print("[!] Starting Montecarlo")
     policy = Policy(env)
@@ -38,7 +38,7 @@ def montecarlo(env, c, log=False):
         print("[+] Episode %d\r" % (ep+1), end="")
         ep_start_t = time.time()
 
-        sag_list, total_reward = evaluate_policy(env, c, policy) # state, action, reward
+        sag_list, total_reward = evaluate_policy(env, c, policy, render) # state, action, reward
         visited_states_actions = []
 
         for s,a,G in sag_list: # s = str(state)
@@ -73,14 +73,15 @@ def montecarlo(env, c, log=False):
 '''
 play episode until the end, recording every state, action and reward
 '''
-def evaluate_policy(env, c, policy):
+def evaluate_policy(env, c, policy, render=False):
     env.reset()
     sar_list = [] # state, action, reward
     done = False
     a = env.action_space.sample() # start with random action
     total_reward = 0
     for _ in range(c.max_steps):
-        env.render()
+        # step
+        if render: env.render()
         new_state, reward, done, info = env.step(a)
         s_hash = state_hash(new_state)
         total_reward += reward

@@ -4,7 +4,7 @@ from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
-def run_sarsa(env, initial_config, log=False):
+def run_sarsa(env, initial_config, log=False, render=False):
     config = copy_config(initial_config)
 
     # default paramaters values
@@ -23,12 +23,13 @@ def run_sarsa(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    policy = sarsa(env, config, log)
+    policy = sarsa(env, config, log, render)
     return (policy, logfile) if log else policy
 
 
-def sarsa(env, c, log=False):
-    
+def sarsa(env, c, log=False, render=False):
+
+    print("[!] Starting Sarsa")    
     policy = Policy(env)
     qtable = Qtable(env.action_space.n)
 
@@ -43,7 +44,7 @@ def sarsa(env, c, log=False):
         done = False        
         while not done:
             # step
-            env.render()
+            if render: env.render()
             new_state, r, done, info = env.step(a)
             new_s_hash = state_hash(new_state)
             total_reward += r        

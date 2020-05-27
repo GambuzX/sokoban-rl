@@ -4,7 +4,7 @@ from sokoban_utils.global_configs import GlobalConfigs
 from sokoban_utils.policy import Policy
 from sokoban_utils.utils import *
 
-def run_qlearning(env, initial_config, log=False):
+def run_qlearning(env, initial_config, log=False, render=False):
     config = copy_config(initial_config)
 
     # default paramaters values
@@ -23,10 +23,12 @@ def run_qlearning(env, initial_config, log=False):
         write_config_to_file(config, logfile)
         config.logfile = logfile
 
-    policy = q_learning(env, config, log)
+    policy = q_learning(env, config, log, render)
     return (policy, logfile) if log else policy
 
-def q_learning(env, config, log):
+def q_learning(env, config, log, render=False):
+
+    print("[!] Starting Qlearning")    
     policy = Policy(env)
     qtable = Qtable(env.action_space.n)
 
@@ -43,7 +45,7 @@ def q_learning(env, config, log):
             a = epsilon_random_action(env, policy[s_hash], config.epsilon) 
 
             # step
-            env.render()
+            if render: env.render()
             new_state, reward, done, info = env.step(a)
             new_s_hash = state_hash(new_state)
             total_reward += reward
@@ -60,6 +62,11 @@ def q_learning(env, config, log):
             # update variables
             s_hash = new_s_hash
             config.epsilon = config.min_epsilon + (config.max_epsilon - config.min_epsilon) * np.exp(-config.decay_rate * ep)
+        
+        if log: 
+            ep_end_t = time.time()
+            elapsed = ep_end_t - ep_start_t # time in seconds
+            write_csv_results(config, ep+1, total_reward, elapsed)
     
     print('')
     return policy
