@@ -83,9 +83,9 @@ def write_config_to_file(config, filename):
         for key in config:
             handle.write(str(key) + ": " + str(config[key]) + "\n")
 
-def write_csv_results(config, episode, reward, elapsed):
+def write_csv_results(config, episode, reward, max_reward, elapsed):
     with open(config.logfile, "a+") as handle:
-        handle.write(str(episode) + "," + str(reward) + "," + str(elapsed) + "\n")
+        handle.write(str(episode) + "," + str(reward) + "," + str(max_reward) + "," + str(elapsed) + "\n")
 
 def current_time():
     now = datetime.now()

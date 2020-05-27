@@ -38,6 +38,7 @@ def q_learning(env, config, log, render=False):
 
         s_hash = state_hash(env.reset()) # reset state
 
+        max_reward = 0
         total_reward = 0
         done = False
         while not done:
@@ -49,6 +50,7 @@ def q_learning(env, config, log, render=False):
             new_state, reward, done, info = env.step(a)
             new_s_hash = state_hash(new_state)
             total_reward += reward
+            max_reward = max(max_reward, total_reward)   
 
             # update qtable
             prev_q = qtable[s_hash][a]
@@ -66,7 +68,7 @@ def q_learning(env, config, log, render=False):
         if log: 
             ep_end_t = time.time()
             elapsed = ep_end_t - ep_start_t # time in seconds
-            write_csv_results(config, ep+1, total_reward, elapsed)
+            write_csv_results(config, ep+1, total_reward, max_reward, elapsed)
     
     print('')
     return policy

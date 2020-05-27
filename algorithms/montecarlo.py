@@ -38,7 +38,7 @@ def montecarlo(env, c, log=False, render=False):
         print("[+] Episode %d\r" % (ep+1), end="")
         ep_start_t = time.time()
 
-        sag_list, total_reward = evaluate_policy(env, c, policy, render) # state, action, reward
+        sag_list, total_reward, max_reward = evaluate_policy(env, c, policy, render) # state, action, reward
         visited_states_actions = []
 
         for s,a,G in sag_list: # s = str(state)
@@ -65,7 +65,7 @@ def montecarlo(env, c, log=False, render=False):
         if log:
             ep_end_t = time.time()
             elapsed = ep_end_t - ep_start_t # time in seconds
-            write_csv_results(c, ep+1, total_reward, elapsed)
+            write_csv_results(c, ep+1, total_reward, max_reward, elapsed)
 
     print('')
     return policy
@@ -78,6 +78,8 @@ def evaluate_policy(env, c, policy, render=False):
     sar_list = [] # state, action, reward
     done = False
     a = env.action_space.sample() # start with random action
+
+    max_reward = 0
     total_reward = 0
     for _ in range(c.max_steps):
         # step
@@ -85,6 +87,7 @@ def evaluate_policy(env, c, policy, render=False):
         new_state, reward, done, info = env.step(a)
         s_hash = state_hash(new_state)
         total_reward += reward
+        max_reward = max(max_reward, total_reward)   
 
         if done:
             sar_list.append((s_hash, 0, reward))
@@ -101,4 +104,4 @@ def evaluate_policy(env, c, policy, render=False):
         sag_list.append((s,a,G))
 
     # return the computed list
-    return (sag_list[::-1], total_reward)
+    return (sag_list[::-1], total_reward, max_reward)
