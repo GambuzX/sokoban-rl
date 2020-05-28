@@ -28,6 +28,8 @@ def print_state(s):
         print("\n")
 
 def state_hash(s):
+    if type(s) is int:
+        return s
     return hash(s.tostring())
 
 def create_dir(name):
