@@ -1,0 +1,4 @@
+logs/montecarlo_15:55:26.txt
+logs/montecarlo_15:57:29.txt
+logs/montecarlo_15:59:32.txt
+logs/montecarlo_16:01:30.txt

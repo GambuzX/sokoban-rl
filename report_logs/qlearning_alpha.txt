@@ -1,0 +1,6 @@
+logs/qlearning_15:47:33.txt
+logs/qlearning_15:48:51.txt
+logs/qlearning_15:50:18.txt
+logs/qlearning_15:51:59.txt
+logs/qlearning_15:53:42.txt
+logs/qlearning_17:53:13.txt

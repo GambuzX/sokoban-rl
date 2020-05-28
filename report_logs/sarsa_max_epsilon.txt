@@ -1,0 +1,6 @@
+logs/sarsa_16:02:46.txt
+logs/sarsa_16:04:13.txt
+logs/sarsa_16:06:16.txt
+logs/sarsa_16:08:56.txt
+logs/sarsa_16:11:51.txt
+logs/sarsa_18:00:39.txt
